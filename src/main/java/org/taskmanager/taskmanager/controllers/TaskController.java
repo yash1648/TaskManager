@@ -5,9 +5,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import org.taskmanager.taskmanager.dto.CreateTaskDTO;
+import org.taskmanager.taskmanager.dto.ErrorResponseDTO;
+import org.taskmanager.taskmanager.dto.UpdateTaskDTO;
 import org.taskmanager.taskmanager.entities.TaskEntities;
 import org.taskmanager.taskmanager.services.TaskService;
 
+import java.text.ParseException;
 import java.util.List;
 
 @RestController
@@ -35,9 +38,28 @@ public class TaskController {
     }
 
     @PostMapping("/addtask")
-    public ResponseEntity<TaskEntities> addTask(@RequestBody CreateTaskDTO body){
+    public ResponseEntity<TaskEntities> addTask(@RequestBody CreateTaskDTO body)throws ParseException{
        return ResponseEntity.ok( taskservice.addTask(body.getTitle(),body.getDescription(),body.getDeadline()));
     }
 
+    @PatchMapping("/{id}")
+    public ResponseEntity<TaskEntities> updateTask(@PathVariable Integer id, @RequestBody UpdateTaskDTO body)throws ParseException{
+        var task=taskservice.updateTask(id,body.getDescription(),body.getDeadline(),body.getCompleted());
+        if(task==null)
+            return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(task);
+    }
+
+
+
+
+    @ExceptionHandler(ParseException.class)
+    public ResponseEntity<ErrorResponseDTO> handleParseError(Exception e){
+        if(e instanceof ParseException){
+            return  ResponseEntity.badRequest().body(new ErrorResponseDTO("Invalid date format"));
+        }
+        e.printStackTrace();
+        return ResponseEntity.internalServerError().body(new ErrorResponseDTO("Internal Error Error"));
+    }
 
 }
